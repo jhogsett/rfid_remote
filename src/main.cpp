@@ -15,7 +15,7 @@
 #define PULSE_SEQUENCE_COUNT 3        // Need 3 contiguous pulses
 #define GARAGE_DOOR_ACTIVE_TIME 2000  // Keep pin 7 HIGH for 2 seconds
 #define PULSE_TIMING_TOLERANCE 200    // Allow ±200ms tolerance for 1000ms timing
-#define GARAGE_DOOR_IGNORE_TIME 2000  // Ignore pulses for 2 seconds after activation
+#define GARAGE_DOOR_IGNORE_TIME 3000  // Ignore pulses for 2 seconds after activation
 
 // Digital filter parameters (now adjustable at runtime)
 unsigned long DEBOUNCE_TIME_US = 1000;   // 1ms debounce time

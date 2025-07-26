@@ -15,6 +15,7 @@
 #define PULSE_SEQUENCE_COUNT 3        // Need 3 contiguous pulses
 #define GARAGE_DOOR_ACTIVE_TIME 2000  // Keep pin 7 HIGH for 2 seconds
 #define PULSE_TIMING_TOLERANCE 200    // Allow ±200ms tolerance for 1000ms timing
+#define GARAGE_DOOR_IGNORE_TIME 2000  // Ignore pulses for 2 seconds after activation
 
 // Digital filter parameters (now adjustable at runtime)
 unsigned long DEBOUNCE_TIME_US = 1000;   // 1ms debounce time
@@ -147,6 +148,7 @@ typedef struct {
   bool garage_door_active;                         // Is garage door currently activated?
   unsigned long garage_door_start_time;           // When garage door activation started
   unsigned long last_valid_pulse_time;            // Timestamp of last valid pulse
+  unsigned long ignore_until_time;                // Ignore pulses until this time (dead time)
 } garage_door_state_t;
 
 garage_door_state_t garage_door_state;
@@ -190,6 +192,7 @@ void init_garage_door_state() {
   garage_door_state.garage_door_active = false;
   garage_door_state.garage_door_start_time = 0;
   garage_door_state.last_valid_pulse_time = 0;
+  garage_door_state.ignore_until_time = 0;
   
   // Initialize pulse times array
   for(int i = 0; i < PULSE_SEQUENCE_COUNT; i++) {
@@ -199,6 +202,14 @@ void init_garage_door_state() {
 
 // Process valid pulse for garage door activation sequence
 void process_garage_door_sequence(unsigned long current_time_ms) {
+  // Check if we're in the ignore period (dead time after activation)
+  if(current_time_ms < garage_door_state.ignore_until_time) {
+    Serial.print("Pulse ignored - in dead time (");
+    Serial.print(garage_door_state.ignore_until_time - current_time_ms);
+    Serial.println("ms remaining)");
+    return;
+  }
+  
   // Check if this pulse is part of a valid sequence
   bool is_sequence_pulse = false;
   
@@ -240,6 +251,9 @@ void process_garage_door_sequence(unsigned long current_time_ms) {
       garage_door_state.garage_door_start_time = current_time_ms;
       garage_door_state.pulse_count = 0; // Reset for next sequence
       
+      // Set ignore period - garage door will ignore pulses for the next 2 seconds
+      garage_door_state.ignore_until_time = current_time_ms + GARAGE_DOOR_IGNORE_TIME;
+      
       digitalWrite(GARAGE_DOOR_PIN, HIGH);
       
       Serial.println("*** GARAGE DOOR ACTIVATED! ***");
@@ -248,6 +262,9 @@ void process_garage_door_sequence(unsigned long current_time_ms) {
       Serial.print(" set HIGH for ");
       Serial.print(GARAGE_DOOR_ACTIVE_TIME);
       Serial.println(" ms");
+      Serial.print("Pulses will be ignored for ");
+      Serial.print(GARAGE_DOOR_IGNORE_TIME);
+      Serial.println(" ms to prevent double-activation");
     }
   }
 }

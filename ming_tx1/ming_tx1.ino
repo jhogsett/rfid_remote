@@ -49,6 +49,7 @@ void print_help_menu() {
   Serial.println("c - Custom timing (enter your own gap values)");
   Serial.println("i - Interference test (valid sequence + extra pulses)");
   Serial.println("r - Random timing test (10 sequences with random gaps)");
+  Serial.println("d - Double activation test (6 valid pulses in a row)");
   Serial.println("1 - Single pulse test");
   Serial.println("2 - Two pulse test (incomplete sequence)");
   Serial.println("h - Show this help menu");
@@ -200,6 +201,28 @@ void send_custom_sequence() {
   Serial.println("Custom sequence complete!\n");
 }
 
+void send_double_activation_test() {
+  Serial.println("\n*** DOUBLE ACTIVATION TEST ***");
+  Serial.println("Sending 6 valid pulses in a row to test dead time protection");
+  Serial.println("Expected: First 3 pulses activate garage door, next 3 should be ignored");
+  
+  for(int i = 1; i <= 6; i++) {
+    Serial.print("Pulse ");
+    Serial.print(i);
+    Serial.print(" of 6 - ");
+    send_pulse();
+    
+    if(i < 6) {
+      Serial.println("Gap: 500ms...");
+      delay(500);
+    }
+  }
+  
+  Serial.println("Double activation test complete!");
+  Serial.println("Check receiver output - should show activation after pulse 3,");
+  Serial.println("then pulses 4-6 should be ignored due to dead time.\n");
+}
+
 void process_command() {
   if(Serial.available()) {
     char cmd = Serial.read();
@@ -238,6 +261,10 @@ void process_command() {
         
       case 'r':
         send_random_timing_test();
+        break;
+        
+      case 'd':
+        send_double_activation_test();
         break;
         
       case '1':

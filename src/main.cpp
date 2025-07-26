@@ -22,7 +22,7 @@ unsigned long DEBOUNCE_TIME_US = 1000;   // 1ms debounce time
 unsigned long MIN_STABLE_TIME_US = 5000; // 5ms minimum stable time before state change
 int FILTER_SAMPLES = 5;                  // Number of samples for majority vote
 unsigned long MIN_LEGIT_TIME_RUNTIME = 50000;    // 50ms in microseconds
-unsigned long MAX_LEGIT_TIME_RUNTIME = 350000;   // 300ms in microseconds
+unsigned long MAX_LEGIT_TIME_RUNTIME = 350000;   // 350ms in microseconds
 
 #define MAX_FILTER_SAMPLES 15   // Maximum allowed filter samples
 
@@ -508,7 +508,7 @@ void loop() {
   unsigned long maxtime = 0L;
   unsigned long mintime = (unsigned long)-1L;
   int sample_count = 0;
-  char buffer[20] = {"\0"};
+  char buffer[20];
   bool running1 = false;
 
   while(true){

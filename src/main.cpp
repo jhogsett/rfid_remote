@@ -1,7 +1,11 @@
 #include <Arduino.h>
 
+// #define ENABLE_DISPLAY
+
+#ifdef ENABLE_DISPLAY
 #include <Wire.h>
 #include <HT16K33Disp.h>
+#endif
 
 #define RX_PIN 6
 #define LED_PIN 13
@@ -113,8 +117,10 @@ void process_tuning_command() {
   }
 }
 
+#ifdef ENABLE_DISPLAY
 HT16K33Disp *disp1, *disp2, *disp3;
 byte device_display_count = 0;
+#endif
 
 // Digital filter state variables
 typedef enum {
@@ -153,6 +159,7 @@ typedef struct {
 
 garage_door_state_t garage_door_state;
 
+#ifdef ENABLE_DISPLAY
 #define FIRST_DISPLAY 0x70
 #define LAST_DISPLAY  0x77
 #define MAX_DISPLAYS  8
@@ -162,10 +169,11 @@ int count_displays(){
   for (byte address = FIRST_DISPLAY; address <= LAST_DISPLAY; address++) {
     Wire.beginTransmission(address);
     if (Wire.endTransmission() == 0)
-      num_devices++;
-    }
+    num_devices++;
+  }
   return num_devices;
 }
+#endif
 
 // Initialize the digital filter
 void init_digital_filter() {
@@ -447,7 +455,9 @@ bool process_digital_filter(bool raw_input, unsigned long current_time_us) {
 
 void setup() {
   Serial.begin(115200);
+#ifdef ENABLE_DISPLAY
   Wire.begin();
+#endif
   pinMode(RX_PIN, INPUT);
   pinMode(LED_PIN, OUTPUT);
   pinMode(GARAGE_DOOR_PIN, OUTPUT);  // Initialize garage door pin as output
@@ -475,6 +485,7 @@ void setup() {
   Serial.print(PULSE_SEQUENCE_INTERVAL);
   Serial.println("ms apart");
 
+#ifdef ENABLE_DISPLAY
   device_display_count = count_displays();
   switch(device_display_count){
     case 1:
@@ -502,6 +513,7 @@ void setup() {
       break;
     }
   }
+#endif
 }
 
 void loop() {
@@ -509,7 +521,9 @@ void loop() {
   unsigned long mintime = (unsigned long)-1L;
   int sample_count = 0;
   char buffer[20];
+#ifdef ENABLE_DISPLAY
   bool running1 = false;
+#endif
 
   while(true){
     unsigned long current_time_us = micros();
@@ -542,17 +556,20 @@ void loop() {
         mintime = (unsigned long)-1L;
       }
 
-      if(pulse_width < mintime)
+      if(pulse_width < mintime){
         mintime = pulse_width;
-      if(pulse_width > maxtime)
+      }
+
+      if(pulse_width > maxtime){
         maxtime = pulse_width;
+      }
 
       int rdiff = pulse_width / 1000L;
       int rmintime = mintime / 1000L;
       int rmaxtime = maxtime / 1000L;
-
+      
       sprintf(buffer, "%4d%4d%4d", rdiff, rmintime, rmaxtime);
-
+      
       Serial.print("Filtered Duration, Min, Max: ");
       Serial.print(rdiff);
       Serial.print(", ");
@@ -563,13 +580,15 @@ void loop() {
       Serial.print(pulse_filter.state);
       Serial.println(")");
     }
-
-    unsigned long dtime = millis();
-    if(!running1)
+      
+#ifdef ENABLE_DISPLAY
+      unsigned long dtime = millis();
+      if(!running1)
       disp1->begin_scroll_string(buffer, 100, 100);
-
-    running1 = disp1->step_scroll_string(dtime);  
-  }
+      
+      running1 = disp1->step_scroll_string(dtime);  
+#endif
+    }
 }
 
 int main() {

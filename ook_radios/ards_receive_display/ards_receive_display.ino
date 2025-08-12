@@ -17,7 +17,7 @@
 #define SERVER_ADDRESS 2
  
 // Singleton instance of the radio driver
-RH_ASK driver(1800);
+RH_ASK driver(2400);
 // RH_ASK driver(2000, 4, 5, 0); // ESP8266 or ESP32: do not use pin 11 or 2
 // RH_ASK driver(2000, PD14, PD13, 0); STM32F4 Discovery: see tx and rx on Orange and Red LEDS
  
@@ -42,6 +42,8 @@ uint8_t data[] = "And hello back to you";
 // Dont put this on the stack:
 uint8_t buf[RH_ASK_MAX_MESSAGE_LEN];
  
+int failcount = 0;
+
 void loop()
 {
   if (manager.available())
@@ -57,13 +59,17 @@ void loop()
 
       buf[len] = '\0';
 
-      Serial.println((char*)buf);
+      char dispbuf[20];
+      sprintf(dispbuf, "%s %d", (char*)buf, failcount);
+      Serial.println(dispbuf);
 
-      disp1.scroll_string(buf);
+      disp1.scroll_string(dispbuf);
 
       // Send a reply back to the originator client
-      if (!manager.sendtoWait(data, sizeof(data), from))
+      if (!manager.sendtoWait(data, sizeof(data), from)){
         Serial.println("sendtoWait failed");
+        failcount++;
+      }
     }
   }
 }

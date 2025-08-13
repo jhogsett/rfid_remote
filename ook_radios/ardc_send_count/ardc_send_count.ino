@@ -11,9 +11,13 @@
  
 #define CLIENT_ADDRESS 1
 #define SERVER_ADDRESS 2
- 
+
+#define DATARATE 590
+#define RETRIES 15
+#define TIMEOUT 1000
+
 // Singleton instance of the radio driver
-RH_ASK driver(850);
+RH_ASK driver(DATARATE);
 // RH_ASK driver(2000, 4, 5, 0); // ESP8266 or ESP32: do not use pin 11 or 2
 // RH_ASK driver(2000, PD14, PD13, 0); STM32F4 Discovery: see tx and rx on Orange and Red LEDS
  
@@ -25,6 +29,9 @@ void setup()
   Serial.begin(9600);
   if (!manager.init())
     Serial.println("init failed");
+
+  manager.setRetries(10);
+  manager.setTimeout(TIMEOUT);
 }
  
 uint8_t data[] = "Hello World!";
@@ -50,6 +57,8 @@ void loop()
       Serial.print(from, HEX);
       Serial.print(": ");
       Serial.println((char*)buf);
+      Serial.print("Resends: ");
+      Serial.println(manager.retransmissions());
     }
     else
     {

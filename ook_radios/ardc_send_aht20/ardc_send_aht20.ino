@@ -5,9 +5,14 @@
 // It is designed to work with the other example ask_reliable_datagram_server
 // Tested on Arduino Mega, Duemilanova, Uno, Due, Teensy, ESP-12
  
+#include <Wire.h>
+#include <AHT20.h>
+
 #include <RHReliableDatagram.h>
 #include <RH_ASK.h>
 #include <SPI.h>
+
+AHT20 aht20;
 
 #define PAIR1
 // #define PAIR2
@@ -25,6 +30,8 @@
 #define DATARATE 480
 #define RETRIES 3
 #define TIMEOUT 1000
+#define WAITDEL 500 
+// 30000
 
 // Singleton instance of the radio driver
 RH_ASK driver(DATARATE, 11, 12, 10, false);
@@ -47,9 +54,30 @@ void setup()
 
   manager.setRetries(10);
   manager.setTimeout(TIMEOUT);
+
+  Wire.begin();
+  if (aht20.begin() == false)
+  {
+    Serial.println("AHT20 not detected. Please check wiring. Freezing.");
+    while(true);
+  }
 }
  
-uint8_t data[] = "Hello World!";
+float sample_temp(){
+  float temp_c, temp_f;
+  temp_c = aht20.getTemperature();
+  temp_f = temp_c * (9.0 / 5.0) + 32.0;
+  return temp_f;
+}
+
+float sample_humid(){
+  float humid;
+  humid = aht20.getHumidity();
+  return humid;
+}
+
+#define DATASIZE 12
+uint8_t data[DATASIZE]; // = "Hello World!";
 // Dont put this on the stack:
 uint8_t buf[RH_ASK_MAX_MESSAGE_LEN];
 
@@ -59,13 +87,26 @@ int sendfailcount = 0;
  
 void loop()
 {
+  // Serial.println("start");
+
+  float temp = sample_temp();
+  float humid = sample_humid();
+
+  Serial.print("Temp: ");
+  Serial.println(temp);
+  Serial.print("Humid: ");
+  Serial.println(humid);
+
   // Serial.println("Sending to ask_reliable_datagram_server");
 
-  sprintf(data, "%ld", millis());
-  int len = strlen(data);
-    
+  // sprintf(data, "%ld", millis());
+  // int len = strlen(data);
+
+  memcpy((void*)data, (const void *)&temp, sizeof(temp));
+  memcpy((void*)data + sizeof(temp), (const void *)&humid, sizeof(humid));
+
   // Send a message to manager_server
-  if (manager.sendtoWait(data, len, SERVER_ADDRESS))
+  if (manager.sendtoWait(data, DATASIZE, SERVER_ADDRESS))
   {
 
     // Now wait for a reply from the server
@@ -92,8 +133,8 @@ void loop()
     }
   }
   else {
-    Serial.println("sendtoWait failed");
+    // Serial.println("sendtoWait failed");
     sendfailcount++;
   }
-  delay(500);
+  delay(WAITDEL);
 }

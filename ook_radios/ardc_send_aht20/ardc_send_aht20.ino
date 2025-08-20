@@ -30,7 +30,7 @@ AHT20 aht20;
 #define DATARATE 480
 #define RETRIES 3
 #define TIMEOUT 1000
-#define WAITDEL 500 
+#define WAITDEL 10000 
 // 30000
 
 // Singleton instance of the radio driver
@@ -76,7 +76,7 @@ float sample_humid(){
   return humid;
 }
 
-#define DATASIZE 12
+#define DATASIZE 8
 uint8_t data[DATASIZE]; // = "Hello World!";
 // Dont put this on the stack:
 uint8_t buf[RH_ASK_MAX_MESSAGE_LEN];
@@ -104,6 +104,12 @@ void loop()
 
   memcpy((void*)data, (const void *)&temp, sizeof(temp));
   memcpy((void*)data + sizeof(temp), (const void *)&humid, sizeof(humid));
+
+  // for(int i = 0; i < DATASIZE; i++){
+  //   Serial.print(data[i]);
+  //   Serial.print(" ");
+  // }
+  // Serial.println();
 
   // Send a message to manager_server
   if (manager.sendtoWait(data, DATASIZE, SERVER_ADDRESS))

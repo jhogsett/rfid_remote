@@ -13,11 +13,21 @@
 // #include <DS3231-RTC.h>
 #include <HT16K33Disp.h>
 
+#define PAIR1
+// #define PAIR2
+
+#ifdef PAIR1
 #define CLIENT_ADDRESS 1
 #define SERVER_ADDRESS 2
+#endif
 
-#define DATARATE 590
-#define RETRIES 15
+#ifdef PAIR2
+#define CLIENT_ADDRESS 3
+#define SERVER_ADDRESS 4
+#endif
+
+#define DATARATE 480
+#define RETRIES 3
 #define TIMEOUT 1000
  
 // Singleton instance of the radio driver
@@ -31,9 +41,14 @@ RHReliableDatagram manager(driver, SERVER_ADDRESS);
 HT16K33Disp disp1(0x70, 3);
 #define DISPLAY_BRIGHTNESS 2
 
+// #define PTT_PIN 10
+
 void setup() 
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
+
+  // pinMode(PTT_PIN, OUTPUT);
+
   if (!manager.init())
     Serial.println("init failed");
 
@@ -73,7 +88,7 @@ void loop()
 
       char dispbuf[30];
       // sprintf(dispbuf, "%s %d %d", (char*)buf, recvcount, failcount);
-      sprintf(dispbuf, "R%d F%d R%d", recvcount, failcount, resend_count);
+      sprintf(dispbuf, "%d F%d R%d", recvcount, failcount, resend_count);
       Serial.println(dispbuf);
 
       disp1.scroll_string(dispbuf);
